@@ -1,100 +1,84 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>
-Ameriabank vPOS example
-</title>
-<body>
 <?php
+/*
+  Plugin Name: WooCommerce Ameria Payment Gateway Pretty
+  Plugin URI: 
+  Description: 
+  Author: Aram Dekart
+  Version: 1.0
+  Requires at least: WP 4.1.0
+  Tested up to: WP 4.7
+  Text Domain: woocommerce-ameria-payment-gateway-pretty
+  Domain Path: /languages
+  Forum URI: #
+  Author URI: 
+ */
 
-
-
-//get orderID for request
-// $last_insert_id = mysql_insert_id();
-
-// $db1->request("INSERT INTO orders_history VALUES ('','".$_SESSION['all']."','".$_SESSION['validuserid']."','".$_SESSION['total_price']."','".date("Y-m-d")."','','0','','".$_POST['branches']."','".$_POST['date_time']."','".$_POST['persons']."','".$last_insert_id."','')");
-
-
-try{
-
-$options = array( 
-
-            'soap_version'    => SOAP_1_1, 
-
-            'exceptions'      => true, 
-
-            'trace'           => 1, 
-
-            'wdsl_local_copy' => true
-
-            );
-
-            //header('Content-Type: text/plain');
-
-$client = new SoapClient("https://testpayments.ameriabank.am/webservice/PaymentService.svc?wsdl", $options);
-
- 
-
-define('ORDER_DESCRIPTION','Description of my order');
-$last_insert_id = 374003; //Must be an integer type
-
-// Set parameters
-
-$parms['paymentfields']['ClientID'] = '5EB8D352-C999-4851-AC4A-E676BD588E33'; // clientID from Ameriabank
-
-$parms['paymentfields']['Description'] =ORDER_DESCRIPTION;
-
-$parms['paymentfields'] ['OrderID']= $last_insert_id;// orderID wich must be unique for every transaction;
-
-$parms['paymentfields'] ['Password']= "lazY2k"; // password from Ameriabank
-
-$parms['paymentfields'] ['PaymentAmount']= 1; // payment amount of your Order
-
-$parms['paymentfields'] ['Username']= "3d19541048"; // username from Ameriabank
-
-$parms['paymentfields'] ['backURL']= "http://xp.loc/apay/back.php"; // your backurl after transaction rediracted to this url
-
- 
-
-// Call web service PassMember methord and print response
-
-$webService = $client-> GetPaymentID($parms);
-
-echo($webService->GetPaymentIDResult->Respcode." ");
-
-echo($webService->GetPaymentIDResult->Respmessage." ");
-
-echo($webService->GetPaymentIDResult->PaymentID." ");
-
-
-if($webService->GetPaymentIDResult->Respcode == '1' && $webService->GetPaymentIDResult->Respmessage =='OK')
-{
-	
-	//rediract to Ameriabank server or you can use iFrame to show on your page
-	echo "<script type='text/javascript'>\n";
-	echo "window.location.replace('https://testpayments.ameriabank.am/forms/frm_paymentstype.aspx?clientid=7030b78e-7630-42c0-af48-3b1998f1da29&clienturl=http:// yoursiteaddress/ameriarequestframe.aspx&lang=am&paymentid=".$webService->GetPaymentIDResult->PaymentID."');\n";
-	echo "</script>";
-
-}
-else
-{
-	//Show your exception page
-	echo "<script type='text/javascript'>\n";
-	echo "window.location.replace(document.getElementsByTagName('base')[0].href+"."'".$langs_id."'"."+'/error.html');";
-	echo "</script>";
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
 }
 
-       } catch (Exception $e) {
+add_action( 'plugins_loaded', 'wc_ameria_payment_gateway_pretty_init', 11 );
 
-       echo 'Caught exception:',  $e->getMessage(), "\n";
+function wc_ameria_payment_gateway_pretty_init() {
 
-} 
-// End Send Receive Code //
+    class WC_Ameria_Payment_Gateway_Pretty extends WC_Payment_Gateway {
 
-//}
-//}
-?>
-</body>
-</head>
-</html>
+        public function __construct() {
+          $this->id = 'WC_Ameria_Payment_Gateway_Pretty';
+          $this->has_fields = false;
+          $this->title = 'Ameria Payment Gateway';
+          $this->method_title = 'Ameria Payment Gateway';
+          $this->method_description = "Ameria Payment Gateway Description";
+
+          $this->init_form_fields();
+          $this->init_settings();
+        }
+
+        /**
+         * Initialize Gateway Settings Form Fields
+         */
+        public function init_form_fields() {
+              
+            $this->form_fields = apply_filters( 'wc_ameria_payment_gateway_pretty_form_fields', array(
+                  
+                'enabled' => array(
+                    'title'   => __( 'Enable/Disable', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'    => 'checkbox',
+                    'label'   => __( 'Enable Ameriabank Payment', 'wc_ameria_payment_gateway_pretty' ),
+                    'default' => 'yes'
+                ),
+
+                'title' => array(
+                    'title'       => __( 'Title', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'        => 'text',
+                    'description' => __( 'This controls the title for the payment method the customer sees during checkout.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => __( 'Ameriabank Payment', 'wc_ameria_payment_gateway_pretty' ),
+                    'desc_tip'    => true,
+                ),
+
+                'description' => array(
+                    'title'       => __( 'Description', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'        => 'textarea',
+                    'description' => __( 'Payment method description that the customer will see on your checkout.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => __( 'Please remit payment to Store Name upon pickup or delivery.', 'wc_ameria_payment_gateway_pretty' ),
+                    'desc_tip'    => true,
+                ),
+
+                'instructions' => array(
+                    'title'       => __( 'Instructions', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'        => 'textarea',
+                    'description' => __( 'Instructions that will be added to the thank you page and emails.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => '',
+                    'desc_tip'    => true,
+                ),
+            ) );
+        }        
+
+    } // end \WC_Ameria_Payment_Gateway_Pretty class
+}
+
+function wc_ameria_payment_gateway_pretty_add_to_gateways( $gateways ) {
+    $gateways[] = 'WC_Ameria_Payment_Gateway_Pretty';
+    return $gateways;
+}
+add_filter( 'woocommerce_payment_gateways', 'wc_ameria_payment_gateway_pretty_add_to_gateways' );
