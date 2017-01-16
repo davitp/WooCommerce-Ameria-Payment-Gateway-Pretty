@@ -1,0 +1,1 @@
+# WooCommerce-Ameria-Payment-Gateway-Pretty
