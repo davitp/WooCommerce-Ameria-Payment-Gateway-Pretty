@@ -32,7 +32,7 @@ function wc_ameria_payment_gateway_pretty_init() {
           // $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/WC_Ameria_Payment_Gateway_Pretty' )  );
 
           // var_dump($this->notify_url); die;
-          add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
+          // add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
 
 
           $this->init_form_fields();
@@ -40,7 +40,7 @@ function wc_ameria_payment_gateway_pretty_init() {
         }
 
         public function wapgp_response () {
-          echo 'die'; die;
+          
         }
 
         /**
@@ -81,6 +81,29 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'desc_tip'    => true,
                 ),
             ) );
+        }
+
+        /**
+       * Process the payment and return the result
+       **/
+        public function process_payment( $order_id ) {
+            
+            $order = wc_get_order( $order_id );
+                    
+            // Mark as on-hold (we're awaiting the payment)
+            $order->update_status( 'on-hold', __( 'Awaiting offline payment', 'wc-gateway-offline' ) );
+                    
+            // Reduce stock levels
+            $order->reduce_order_stock();
+                    
+            // Remove cart
+            WC()->cart->empty_cart();
+                    
+            // Return thankyou redirect
+            return array(
+                'result'    => 'success',
+                'redirect'  => $this->get_return_url( $order )
+            );
         }
 
 
