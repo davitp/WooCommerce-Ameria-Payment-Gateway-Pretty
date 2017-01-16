@@ -29,9 +29,18 @@ function wc_ameria_payment_gateway_pretty_init() {
           $this->title = 'Ameria Payment Gateway';
           $this->method_title = 'Ameria Payment Gateway';
           $this->method_description = "Ameria Payment Gateway Description";
+          // $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/WC_Ameria_Payment_Gateway_Pretty' )  );
+
+          // var_dump($this->notify_url); die;
+          add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
+
 
           $this->init_form_fields();
           $this->init_settings();
+        }
+
+        public function wapgp_response () {
+          echo 'die'; die;
         }
 
         /**
@@ -72,7 +81,9 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'desc_tip'    => true,
                 ),
             ) );
-        }        
+        }
+
+
 
     } // end \WC_Ameria_Payment_Gateway_Pretty class
 }
@@ -81,4 +92,5 @@ function wc_ameria_payment_gateway_pretty_add_to_gateways( $gateways ) {
     $gateways[] = 'WC_Ameria_Payment_Gateway_Pretty';
     return $gateways;
 }
+
 add_filter( 'woocommerce_payment_gateways', 'wc_ameria_payment_gateway_pretty_add_to_gateways' );
