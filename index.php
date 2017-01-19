@@ -35,7 +35,7 @@ function wc_ameria_payment_gateway_pretty_init() {
           $this->title = 'Ameria Payment Gateway';
           $this->method_title = 'Ameria Payment Gateway';
           $this->method_description = "Ameria Payment Gateway Description";
-          $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/WC_Ameria_Payment_Gateway_Pretty' )  );
+          $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/'. $this->id )  );
 
           // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
           add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
@@ -44,7 +44,9 @@ function wc_ameria_payment_gateway_pretty_init() {
           $this->init_form_fields();
           $this->init_settings();
 
-           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );     
+          add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );  
+
+          
         }
 
         // Hook into gateway action, being call on return from Ameriabank third party gateway
@@ -122,6 +124,12 @@ function wc_ameria_payment_gateway_pretty_init() {
             
             // Get successfull payd page
             $thankyou = $this->get_return_url( $order ); 
+
+
+            // Change an option of ameria order_id, increment to have unique one
+            $opt_array = get_option('woocommerce_' . $this->id . '_settings');
+            $opt_array['ameria_order_id'] += 1;
+            update_option($this->get_option_key(),$opt_array);
 
             // Redirect to success page
             echo $thankyou; die;
@@ -211,7 +219,7 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                   $client = new SoapClient("https://testpayments.ameriabank.am/webservice/PaymentService.svc?wsdl", $options);
 
-                  $last_insert_id = 374012; //Must be an integer type
+                  $last_insert_id = $this->get_option('ameria_order_id'); //374012; //Must be an integer type
 
                   $this->paymentAmount = 1; //$order->get_total();
                   $_SESSION['cart_total'] = $this->paymentAmount;
@@ -220,7 +228,7 @@ function wc_ameria_payment_gateway_pretty_init() {
                   // Set parameters
                   $parms['paymentfields']['ClientID'] = '5EB8D352-C999-4851-AC4A-E676BD588E33'; // clientID from Ameriabank
                   $parms['paymentfields']['Description'] = $order_description;
-                  $parms['paymentfields'] ['OrderID']= $last_insert_id;// orderID wich must be unique for every transaction;
+                  $parms['paymentfields'] ['OrderID']= $last_insert_id+1;// orderID wich must be unique for every transaction;
                   $parms['paymentfields'] ['Password']= "lazY2k"; // password from Ameriabank
 
                   $parms['paymentfields'] ['PaymentAmount']= 1; // payment amount of your Order
