@@ -32,7 +32,7 @@ function wc_ameria_payment_gateway_pretty_init() {
           // Descriptive parameters for gateway
           $this->id = 'WC_Ameria_Payment_Gateway_Pretty';
           $this->has_fields = false;
-          $this->title = 'Ameria Payment Gateway';
+          $this->title = $this->get_option('title');
           $this->method_title = 'Ameria Payment Gateway';
           $this->method_description = "Ameria Payment Gateway Description";
           $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/'. $this->id )  );
@@ -46,12 +46,24 @@ function wc_ameria_payment_gateway_pretty_init() {
 
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );  
 
-          
+
+
         }
 
         // Hook into gateway action, being call on return from Ameriabank third party gateway
         public function wapgp_response ($param) {
           global $woocommerce;
+
+          // Store session information within variables
+          $order_id = $_SESSION['order_id']; 
+          $order_description = $_SESSION['order_description'];
+          $cart_total = $_SESSION['cart_total'];
+
+          // Unset the session sensitive information to avoid bugs on later use
+          unset($_SESSION['order_id']);
+          unset($_SESSION['order_description']);
+          unset($_SESSION['cart_total']);
+
           try{
 
                     $options = array( 
@@ -65,10 +77,10 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                      // Set parameters for Ameriabank
                     $parms['paymentfields']['ClientID'] = '5EB8D352-C999-4851-AC4A-E676BD588E33'; // clientID from Ameriabank
-                    $parms['paymentfields']['Description'] = $_SESSION['order_description'];
+                    $parms['paymentfields']['Description'] = $order_description;
                     $parms['paymentfields'] ['OrderID']= $_POST['orderID'];
                     $parms['paymentfields'] ['Password']= "lazY2k"; // password from Ameriabank
-                    $parms['paymentfields'] ['PaymentAmount']= (int)$_SESSION['cart_total']; // payment amount of your Order
+                    $parms['paymentfields'] ['PaymentAmount']= (int)$cart_total; // payment amount of your Order
                     $parms['paymentfields'] ['Username']= "3d19541048"; // username from Ameriabank
 
                     // Call web service PassMember method 
@@ -111,7 +123,7 @@ function wc_ameria_payment_gateway_pretty_init() {
           // If not okay, code will redirect to the error page
           if($continue) {
             // Get order by order_id
-            $order = wc_get_order( $_SESSION['order_id'] );
+            $order = wc_get_order( $order_id );
             
             // Set payment comleted
             $order->payment_complete();
@@ -178,18 +190,9 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'title'       => __( 'Description', 'wc_ameria_payment_gateway_pretty' ),
                     'type'        => 'textarea',
                     'description' => __( 'Payment method description that the customer will see on your checkout.', 'wc_ameria_payment_gateway_pretty' ),
-                    'default'     => __( 'Please remit payment to Store Name upon pickup or delivery.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => __( 'Thank you for using our website.', 'wc_ameria_payment_gateway_pretty' ),
                     'desc_tip'    => true,
                 ),
-
-                'instructions' => array(
-                    'title'       => __( 'Instructions', 'wc_ameria_payment_gateway_pretty' ),
-                    'type'        => 'textarea',
-                    'description' => __( 'Instructions that will be added to the thank you page and emails.', 'wc_ameria_payment_gateway_pretty' ),
-                    'default'     => '',
-                    'desc_tip'    => true,
-                ),
-
                 'ameria_order_id' => array(
                     'title'       => __( 'Order Id', 'wc_ameria_payment_gateway_pretty' ),
                     'type'        => 'textarea',
@@ -202,12 +205,13 @@ function wc_ameria_payment_gateway_pretty_init() {
         }
 
 
-
+        /**
+       * Process the payment and return the result
+       **/
         public function process_payment($order_id) {
-          // Get order info by order_id         
-          // 
-
+            // Get order info by order_id   
             $order = wc_get_order( $order_id );
+
               try{
 
                   $options = array( 
@@ -221,22 +225,26 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                   $last_insert_id = $this->get_option('ameria_order_id'); //374012; //Must be an integer type
 
+
+                  // Get order total
                   $this->paymentAmount = 1; //$order->get_total();
+                  
+                  // Save different information in Session for later testing
                   $_SESSION['cart_total'] = $this->paymentAmount;
-                  $_SESSION['order_description'] = $order_description = 'Description';
+                  $_SESSION['order_description'] = $order_description = $this->get_option('description');
                   $_SESSION['order_id'] = $order_id;
-                  // Set parameters
+
+                  // Set parameters for ameriabank request
                   $parms['paymentfields']['ClientID'] = '5EB8D352-C999-4851-AC4A-E676BD588E33'; // clientID from Ameriabank
                   $parms['paymentfields']['Description'] = $order_description;
                   $parms['paymentfields'] ['OrderID']= $last_insert_id+1;// orderID wich must be unique for every transaction;
+                  $parms['paymentfields'] ['Username']= "3d19541048"; // username from Ameriabank
                   $parms['paymentfields'] ['Password']= "lazY2k"; // password from Ameriabank
 
-                  $parms['paymentfields'] ['PaymentAmount']= 1; // payment amount of your Order
-                  $parms['paymentfields'] ['Username']= "3d19541048"; // username from Ameriabank
+                  $parms['paymentfields'] ['PaymentAmount'] = $this->paymentAmount; // payment amount of your Order
                   $parms['paymentfields'] ['backURL']= $this->notify_url;  // your backurl after transaction rediracted to this url
 
                   // Call web service PassMember methord and print response
-
                   $webService = $client-> GetPaymentID($parms);
 
                   if($webService->GetPaymentIDResult->Respcode == '1' && $webService->GetPaymentIDResult->Respmessage =='OK')
@@ -249,7 +257,7 @@ function wc_ameria_payment_gateway_pretty_init() {
                     
                     $ameriaRedirectUri = "https://testpayments.ameriabank.am/forms/frm_paymentstype.aspx?clientid=5EB8D352-C999-4851-AC4A-E676BD588E33&clienturl={$this->notify_url}&lang=am&paymentid={$webService->GetPaymentIDResult->PaymentID}";
                   
-
+                    // Return success and third party(ameriabank) redirect uri
                     return array(
                         'result'    => 'success',
                         'redirect'  => $ameriaRedirectUri
@@ -277,45 +285,6 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                 }           
         }
-
-        /**
-       * Process the payment and return the result
-       **/
-        public function process_paymentasdfadf( $order_id ) {
-            
-            $order = wc_get_order( $order_id );
-                    
-            // Mark as on-hold (we're awaiting the payment)
-            // $order->update_status( 'on-hold', __( 'Awaiting offline payment', 'wc-gateway-offline' ) );
-                    
-            // Reduce stock levels
-            // $order->reduce_order_stock();
-                    
-            // Remove cart
-            //WC()->cart->empty_cart();
-                    
-            // Return thankyou redirect
-            // $order = new WC_Order($order_id);
-
-            // echo '<pre>';
-            $backUrl = $this->notify_url; 
-
-
-            var_dump($this->notify_url); die;
-
-            // return array('result' => 'success', 'redirect' => $order->get_checkout_payment_url( true ));             
-             
-            // return array(
-            //     'result'    => 'success',
-            //     'redirect'  => $this->get_return_url( $order )
-            // );
-
-            return array(
-                'result'    => 'success',
-                'redirect'  => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('thanks'))))
-            );            
-        }
-
 
 
     } // end \WC_Ameria_Payment_Gateway_Pretty class
