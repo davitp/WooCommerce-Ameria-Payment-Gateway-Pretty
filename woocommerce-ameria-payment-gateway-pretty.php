@@ -1,16 +1,16 @@
 <?php
 /*
   Plugin Name: WooCommerce Ameria Payment Gateway Pretty
-  Plugin URI: 
-  Description: 
+  Plugin URI: https://github.com/uptimex/WooCommerce-Ameria-Payment-Gateway-Pretty
+  Description: WooCommerce payment gateway using Ameriabank third-party platform (on ARCA)
   Author: Aram Dekart
-  Version: 1.0
-  Requires at least: WP 4.1.0
-  Tested up to: WP 4.7
+  Author URI: https://github.com/uptimex
+  Version: 1.0.0
+  Requires at least: WP 4.7.1
+  Tested up to: WP 4.7.1
   Text Domain: woocommerce-ameria-payment-gateway-pretty
   Domain Path: /languages
   Forum URI: #
-  Author URI: 
  */
 function out($var) {
   echo '<pre>';
@@ -39,9 +39,12 @@ function wc_ameria_payment_gateway_pretty_init() {
           // Descriptive parameters for gateway
           $this->id = 'WC_Ameria_Payment_Gateway_Pretty';
           $this->has_fields = false;
-          $this->title = $this->get_option('title');
-          $this->method_title = 'Ameria Payment Gateway';
-          $this->method_description = "Ameria Payment Gateway Description";
+          $this->title = 'Ameria';
+          $this->description = 'Pay, using Ameriabank payment system.';
+		  
+          $this->method_title = 'Ameriabank Payment Gateway';
+		$this->order_button_text = __( 'Proceed to Ameriabank', 'woocommerce' );
+          $this->method_description = "Payment via Ameriabank third party payment system.";
           $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/'. $this->id )  );
           
 
@@ -214,7 +217,7 @@ function wc_ameria_payment_gateway_pretty_init() {
                 ),
                 'ameria_order_id' => array(
                     'title'       => __( 'Order Id', 'wc_ameria_payment_gateway_pretty' ),
-                    'type'        => 'textarea',
+                    'type'        => 'text',
                     'description' => __( 'Order Id that must be unique in every single order. And increment after every order.', 'wc_ameria_payment_gateway_pretty' ),
                     'default'     => '',
                     'desc_tip'    => true,
