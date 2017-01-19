@@ -17,8 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Session start, probably can be solved putting the plugin in init function
 session_start();
 
+// Initiate the plugin after plugins loaded
 add_action( 'plugins_loaded', 'wc_ameria_payment_gateway_pretty_init', 11 );
 
 function wc_ameria_payment_gateway_pretty_init() {
@@ -26,6 +28,8 @@ function wc_ameria_payment_gateway_pretty_init() {
     class WC_Ameria_Payment_Gateway_Pretty extends WC_Payment_Gateway {
 
         public function __construct() {
+
+          // Descriptive parameters for gateway
           $this->id = 'WC_Ameria_Payment_Gateway_Pretty';
           $this->has_fields = false;
           $this->title = 'Ameria Payment Gateway';
@@ -33,19 +37,19 @@ function wc_ameria_payment_gateway_pretty_init() {
           $this->method_description = "Ameria Payment Gateway Description";
           $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/WC_Ameria_Payment_Gateway_Pretty' )  );
 
-          // var_dump($this->notify_url); die;
+          // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
           add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
 
-
+          // Initalize form fields and settings
           $this->init_form_fields();
           $this->init_settings();
+
+           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );     
         }
 
+        // Hook into gateway action, being call on return from Ameriabank third party gateway
         public function wapgp_response ($param) {
-          // echo '<pre>';
-          // print_r($_POST);
-          // print_r($_SESSION); die;
-
+          global $woocommerce;
           try{
 
                     $options = array( 
@@ -57,8 +61,7 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                     $client = new SoapClient("https://testpayments.ameriabank.am/webservice/PaymentService.svc?wsdl", $options);
 
-                     // Set parameters
-
+                     // Set parameters for Ameriabank
                     $parms['paymentfields']['ClientID'] = '5EB8D352-C999-4851-AC4A-E676BD588E33'; // clientID from Ameriabank
                     $parms['paymentfields']['Description'] = $_SESSION['order_description'];
                     $parms['paymentfields'] ['OrderID']= $_POST['orderID'];
@@ -66,17 +69,9 @@ function wc_ameria_payment_gateway_pretty_init() {
                     $parms['paymentfields'] ['PaymentAmount']= (int)$_SESSION['cart_total']; // payment amount of your Order
                     $parms['paymentfields'] ['Username']= "3d19541048"; // username from Ameriabank
 
-                    // Call web service PassMember methord and print response
-
+                    // Call web service PassMember method 
                     $webService = $client->GetPaymentFields($parms);
 
-                    // echo($webService->GetPaymentFieldsResult->amount." ");
-                    // echo($webService->GetPaymentFieldsResult->respcode." ");
-                    // echo($webService->GetPaymentFieldsResult ->cardnumber." ");
-                    // echo($webService->GetPaymentFieldsResult ->paymenttype." ");
-                    // echo($webService->GetPaymentFieldsResult ->authcode." ");
-                      //
-                      
                     $continue = false;
 
                     if($webService->GetPaymentFieldsResult->respcode == '00')
@@ -91,14 +86,7 @@ function wc_ameria_payment_gateway_pretty_init() {
                           // you can print your check or call Ameriabank check example
                            //echo   '<iframe id="idIframe" src="https://testpayments.ameriabank.am/forms/frm_checkprint.aspx?lang=am&paymentid='.$_POST['paymentid'].'" width="560px" height="820px" frameborder="0"></iframe>';
                          }
-                         else
-                         {
-                          // Error
-                          // Rediract to Exception Page
-                          echo "<script type='text/javascript'>\n";
-                          echo "window.location.replace(document.getElementsByTagName('base')[0].href+"."'".$langs_id."'"."+'/error.html');";
-                          echo "</script>";
-                         }
+
                        }
                        else
                        {
@@ -110,30 +98,46 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                        }
 
-                        if($continue) {
-
-                          $order = wc_get_order( $_SESSION['order_id'] );
-                          $order->payment_complete();
-                          
-                          $thankyou = $this->get_return_url( $order ); 
-
-                          echo $thankyou; die;
-                        } else {
-                          //error
-                        }
 
                     }
-                    else
-                    {
-                        // error page
-        
 
-                    }
            } catch (Exception $e) {
-
-                 echo 'Caught exception:',  $e->getMessage(), "\n";
-
+              // Catching an exception, not really being used, predefined $continue is false
           } 
+
+          // If is okay, code will put the order completed and redirect to thank you page
+          // If not okay, code will redirect to the error page
+          if($continue) {
+            // Get order by order_id
+            $order = wc_get_order( $_SESSION['order_id'] );
+            
+            // Set payment comleted
+            $order->payment_complete();
+
+            // Reduce stock levels
+            $order->reduce_order_stock();
+                    
+            // Remove cart
+            WC()->cart->empty_cart();            
+            
+            // Get successfull payd page
+            $thankyou = $this->get_return_url( $order ); 
+
+            // Redirect to success page
+            echo $thankyou; die;
+
+          } else {
+
+            // Set error notice
+            wc_add_notice( __('Problem with the payment. Please contact site administrator.', 'wapgp'), 'error' );
+
+            // Get checkout url using global $woocommerce
+            $checkout_url = $woocommerce->cart->get_checkout_url();
+
+            // Redirect to the checkout page
+            wp_redirect($checkout_url);
+            die;
+          }
 
           // End Send Receive Code //
           
@@ -177,7 +181,16 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'default'     => '',
                     'desc_tip'    => true,
                 ),
-            ) );
+
+                'ameria_order_id' => array(
+                    'title'       => __( 'Order Id', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'        => 'textarea',
+                    'description' => __( 'Order Id that must be unique in every single order. And increment after every order.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => '',
+                    'desc_tip'    => true,
+                ),                
+            ) 
+            );
         }
 
 
@@ -198,7 +211,7 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                   $client = new SoapClient("https://testpayments.ameriabank.am/webservice/PaymentService.svc?wsdl", $options);
 
-                  $last_insert_id = 374010; //Must be an integer type
+                  $last_insert_id = 374012; //Must be an integer type
 
                   $this->paymentAmount = 1; //$order->get_total();
                   $_SESSION['cart_total'] = $this->paymentAmount;
@@ -223,12 +236,6 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                     // Mark as on-hold (we're awaiting the payment)
                     $order->update_status( 'on-hold', __( 'Awaiting offline payment', 'wc-gateway-offline' ) );
-                            
-                    // Reduce stock levels
-                    $order->reduce_order_stock();
-                            
-                    // Remove cart
-                    WC()->cart->empty_cart();
 
                     //rediract to Ameriabank server or you can use iFrame to show on your page
                     
@@ -245,7 +252,7 @@ function wc_ameria_payment_gateway_pretty_init() {
                   {
                     wc_add_notice( __('Error processing checkout. Please contact administrator.','payment'), 'error' );
                     // Add note to the order for your reference
-                    $customer_order->add_order_note( __('Error processing checkout. Please contact administrator.','payment') );
+                    //$customer_order->add_order_note( __('Error processing checkout. Please contact administrator.','payment') );
 
                     // Errors for developer
                     // echo($webService->GetPaymentIDResult->Respcode." ");
@@ -258,7 +265,7 @@ function wc_ameria_payment_gateway_pretty_init() {
 
                      wc_add_notice( __('Error processing checkout. Please contact administrator.','payment'), 'error' );
                     // Add note to the order for your reference
-                    $customer_order->add_order_note( __('Error processing checkout. Please contact administrator.','payment') );
+                    //$customer_order->add_order_note( __('Error processing checkout. Please contact administrator.','payment') );
 
                 }           
         }
