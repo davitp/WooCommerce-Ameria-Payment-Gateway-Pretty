@@ -12,12 +12,7 @@
   Domain Path: /languages
   Forum URI: #
  */
-function out($var) {
-  echo '<pre>';
-  print_r($var);
-  echo '</pre>';
 
-}
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -56,7 +51,7 @@ function wc_ameria_payment_gateway_pretty_init() {
           $this->init_settings();
 
           // Get testmode. Getting exactly here to avoid default empty issue.
-          $this->testmode = ($this->get_option('testmode')) ? 'test' : 'no';
+          $this->testmode = ($this->get_option('testmode')) ? 'test' : '';
 
           // This line forces update settings on payment page
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
