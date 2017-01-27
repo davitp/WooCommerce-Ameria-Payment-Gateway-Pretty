@@ -145,12 +145,6 @@ function wc_ameria_payment_gateway_pretty_init() {
             // Get successfull payd page
             $thankyou = $this->get_return_url( $order ); 
 
-
-            // Change an option of ameria order_id, increment to have unique one
-            $opt_array = get_option('woocommerce_' . $this->id . '_settings');
-            $opt_array['ameria_order_id'] += 1;
-            update_option($this->get_option_key(),$opt_array);
-
             // Redirect to success page
             wp_redirect($thankyou); die;
 
@@ -272,9 +266,15 @@ function wc_ameria_payment_gateway_pretty_init() {
                   // Get last insert id
                   $last_insert_id = $this->get_option('ameria_order_id'); //374012; //Must be an integer type
 
+					// Change an option of ameria order_id, increment to have unique one
+					$opt_array = get_option('woocommerce_' . $this->id . '_settings');
+					$opt_array['ameria_order_id'] += 1;
+					update_option($this->get_option_key(),$opt_array);
 
                   // Get order total
                   $this->paymentAmount = $order->get_total();
+				  
+			  
                   
                   // Save different information in Session for later testing
                   $_SESSION['cart_total'] = $this->paymentAmount;
