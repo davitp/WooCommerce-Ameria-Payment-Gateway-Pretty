@@ -49,7 +49,9 @@ function wc_ameria_payment_gateway_pretty_init() {
 		  
 		  $this->title = $this->settings['title'];
 		  $this->description = $this->settings['description'];
-		  $this->order_button_text = $this->settings['buttontext'];
+		  
+		  
+		  $this->order_button_text = __($this->settings['buttontext'], 'wc_ameria_payment_gateway_pretty' );
 		  
           // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
           add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );		  
