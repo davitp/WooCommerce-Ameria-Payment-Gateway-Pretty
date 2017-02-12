@@ -29,26 +29,31 @@ function wc_ameria_payment_gateway_pretty_init() {
     class WC_Ameria_Payment_Gateway_Pretty extends WC_Payment_Gateway {
 
         public function __construct() {
-
+		
+			
 
           // Descriptive parameters for gateway
           $this->id = 'WC_Ameria_Payment_Gateway_Pretty';
           $this->has_fields = false;
-          $this->title = 'Ameria';
-          $this->description = 'Pay, using Ameriabank payment system.';
+          
+          
 		  
           $this->method_title = 'Ameriabank Payment Gateway';
-		$this->order_button_text = __( 'Proceed to Ameriabank', 'woocommerce' );
+		
           $this->method_description = "Payment via Ameriabank third party payment system.";
           $this->notify_url = str_replace( 'https:', 'http:', home_url( '/wc-api/'. $this->id )  );
           
-
-          // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
-          add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );
-
           // Initalize form fields and settings
           $this->init_form_fields();
           $this->init_settings();
+		  
+		  $this->title = $this->settings['title'];
+		  $this->description = $this->settings['description'];
+		  $this->order_button_text = $this->settings['buttontext'];
+		  
+          // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
+          add_action( 'woocommerce_api_wc_ameria_payment_gateway_pretty', array( $this, 'wapgp_response' ) );		  
+
 
           // Get testmode. Getting exactly here to avoid default empty issue.
           $this->testmode = ($this->get_option('testmode')) ? 'test' : '';
@@ -196,6 +201,14 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'default'     => __( 'Ameriabank Payment', 'wc_ameria_payment_gateway_pretty' ),
                     'desc_tip'    => true,
                 ),
+				
+                'buttontext' => array(
+                    'title'       => __( 'Button Text', 'wc_ameria_payment_gateway_pretty' ),
+                    'type'        => 'text',
+                    'description' => __( 'This controls the title for the button, during checkout.', 'wc_ameria_payment_gateway_pretty' ),
+                    'default'     => __( 'Pay with visa, mastercard, arca', 'wc_ameria_payment_gateway_pretty' ),
+                    'desc_tip'    => true,
+                ),				
 
                 'description' => array(
                     'title'       => __( 'Description', 'wc_ameria_payment_gateway_pretty' ),
