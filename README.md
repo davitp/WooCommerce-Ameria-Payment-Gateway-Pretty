@@ -1,6 +1,6 @@
 # WooCommerce Ameriabank Payment Gateway Pretty
 
-##### The plugin works with WooCommerce, the functionality includes adding an additional payment option for checkout, using Ameriabank third-party payment system.
+#### The plugin works with WooCommerce, the functionality includes adding an additional payment option for checkout, using Ameriabank third-party payment system.
 
 * This plugin allows you to add an additional payment system to your WooCommerce website, using Ameriabank payment gateway.
 * You can edit settings in dashboard by going to WooCommerce->Settings->Checkout. Scroll down to the bottom of the page where you should  activate it and fill in the settings.
@@ -14,10 +14,10 @@
 * Client ID, Username and Password must be provided by Ameriabank.
 * Updates and changes to the plugin are welcome. If you have a proper edited code, feel free to fork the repository and make your changes.
 
-##### Known problems.
+#### Known problems.
 * Please try to put unique transaction ID, when you are in test mode(remember that the other users use ARCA system too, try to find the unique ID) and also for production (here the transaction ID is only yours). 
 * While testing, try to do transactions with up to 5 AMD amount (read the file Ameriabank sent to you, there will be the max price you can set for the testing)
 
-##### You can see all settings here in the screenshot
+#### You can see all settings here in the screenshot
 
 ![N](https://raw.githubusercontent.com/uptimex/WooCommerce-Ameria-Payment-Gateway-Pretty/master/screenshot.jpg)
