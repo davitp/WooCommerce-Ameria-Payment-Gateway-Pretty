@@ -14,6 +14,9 @@
 * Client ID, Username and Password must be provided by Ameriabank.
 * Updates and changes to the plugin are welcome. If you have a proper edited code, feel free to fork the repository and make your changes.
 
+##### Known problems.
+* Please try to put unique transaction ID, when you are in test mode(remember that the other users use ARCA system too, try to find the unique ID) and also for production (here the transaction ID is only yours). 
+* While testing, try to do transactions with up to 5 AMD amount (read the file Ameriabank sent to you, there will be the max price you can set for the testing)
 
 ##### You can see all settings here in the screenshot
 
