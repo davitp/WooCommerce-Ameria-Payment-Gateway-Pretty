@@ -220,9 +220,9 @@ function wc_ameria_payment_gateway_pretty_init() {
                     'desc_tip'    => true,
                 ),
                 'ameria_order_id' => array(
-                    'title'       => __( 'Order Id', 'wc_ameria_payment_gateway_pretty' ),
+                    'title'       => __( 'Starting Order Id', 'wc_ameria_payment_gateway_pretty' ),
                     'type'        => 'text',
-                    'description' => __( 'Order Id that must be unique in every single order. And increment after every order.', 'wc_ameria_payment_gateway_pretty' ),
+                    'description' => __( 'Starting Order Id must be unique in every single order. And increment after every order.', 'wc_ameria_payment_gateway_pretty' ),
                     'default'     => '',
                     'desc_tip'    => true,
                 ),
