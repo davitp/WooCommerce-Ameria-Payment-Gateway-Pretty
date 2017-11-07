@@ -24,13 +24,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 session_start();
 
 // Initiate the plugin after plugins loaded
-add_action( 'plugins_loaded', 'ameria_gateway_init', 11 );
+add_action( 'plugins_loaded', 'wc_gateway_ameria_gateway_init', 11 );
 
-function ameria_gateway_init() {
-    class Ameria_Gateway extends WC_Payment_Gateway {
+function wc_gateway_ameria_gateway_init() {
+    class wc_gateway_ameria_gateway extends WC_Payment_Gateway {
         public function __construct() {
           // Descriptive parameters for gateway
-          $this->id = 'Ameria_Gateway';
+          $this->id = 'wc_gateway_ameria_gateway';
           $this->has_fields = false;
           $this->method_title = 'Ameriabank Payment Gateway';
           $this->method_description = "Payment via Ameriabank third party payment system.";
@@ -42,14 +42,14 @@ function ameria_gateway_init() {
 
 		      $this->title = $this->settings['title'];
           $this->description = $this->settings['description'];
-          $this->order_button_text = __($this->settings['buttontext'], 'Ameria_Gateway' );
+          $this->order_button_text = __($this->settings['buttontext'], 'wc_gateway_ameria_gateway' );
 
           // Hook into gateway action, clears buffer and return -1 and exits, prevented by redirect to thank you page
-          add_action( 'woocommerce_api_Ameria_Gateway', array( $this, 'wapgp_response' ) );
+          add_action( 'woocommerce_api_wc_gateway_ameria_gateway', array( $this, 'wapgp_response' ) );
 
           // Get testmode. Getting exactly here to avoid default empty issue.
           $this->testmode = ($this->get_option('testmode')) ? 'test' : '';
-          $this->serviceUrl = 'https://'. $this->testmode . 'payments.ameriabank.am/'
+          $this->serviceUrl = 'https://'. $this->testmode . 'payments.ameriabank.am/';
 
           // This line forces update settings on payment page
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -69,7 +69,7 @@ function ameria_gateway_init() {
           unset($_SESSION['order_id']);
           unset($_SESSION['order_description']);
           unset($_SESSION['cart_total']);
-          unset($_SESSION['ameria_order_id'])
+          unset($_SESSION['ameria_order_id']);
 
           try{
             $options = array(
@@ -155,64 +155,64 @@ function ameria_gateway_init() {
          * Initialize Gateway Settings Form Fields
         */
         public function init_form_fields() {
-            $this->form_fields = apply_filters( 'Ameria_Gateway_form_fields', array(
+            $this->form_fields = apply_filters( 'wc_gateway_ameria_gateway_form_fields', array(
               'enabled' => array(
-                  'title'   => __( 'Enable/Disable', 'Ameria_Gateway' ),
+                  'title'   => __( 'Enable/Disable', 'wc_gateway_ameria_gateway' ),
                   'type'    => 'checkbox',
-                  'label'   => __( 'Enable Ameriabank Payment', 'Ameria_Gateway' ),
+                  'label'   => __( 'Enable Ameriabank Payment', 'wc_gateway_ameria_gateway' ),
                   'default' => 'yes'
                 ),
               'testmode' => array(
-                  'title'       => __( 'Test mode', 'Ameria_Gateway' ),
+                  'title'       => __( 'Test mode', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'checkbox',
-                  'label'   => __( 'If enabled you can test', 'Ameria_Gateway' ),
+                  'label'   => __( 'If enabled you can test', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                   'default' => 'yes'
                 ),
               'title' => array(
-                  'title'       => __( 'Title', 'Ameria_Gateway' ),
+                  'title'       => __( 'Title', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'text',
-                  'description' => __( 'This controls the title for the payment method the customer sees during checkout.', 'Ameria_Gateway' ),
-                  'default'     => __( 'Ameriabank Payment', 'Ameria_Gateway' ),
+                  'description' => __( 'This controls the title for the payment method the customer sees during checkout.', 'wc_gateway_ameria_gateway' ),
+                  'default'     => __( 'Ameriabank Payment', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               'buttontext' => array(
-                  'title'       => __( 'Button Text', 'Ameria_Gateway' ),
+                  'title'       => __( 'Button Text', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'text',
-                  'description' => __( 'This controls the title for the button, during checkout.', 'Ameria_Gateway' ),
-                  'default'     => __( 'Pay with visa, mastercard, arca', 'Ameria_Gateway' ),
+                  'description' => __( 'This controls the title for the button, during checkout.', 'wc_gateway_ameria_gateway' ),
+                  'default'     => __( 'Pay with visa, mastercard, arca', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               'description' => array(
-                  'title'       => __( 'Description', 'Ameria_Gateway' ),
+                  'title'       => __( 'Description', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'textarea',
-                  'description' => __( 'Payment method description that the customer will see on your checkout.', 'Ameria_Gateway' ),
-                  'default'     => __( 'Thank you for using our website.', 'Ameria_Gateway' ),
+                  'description' => __( 'Payment method description that the customer will see on your checkout.', 'wc_gateway_ameria_gateway' ),
+                  'default'     => __( 'Thank you for using our website.', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               'ameria_order_id' => array(
-                    'title'       => __( 'Starting Order Id', 'Ameria_Gateway' ),
+                    'title'       => __( 'Starting Order Id', 'wc_gateway_ameria_gateway' ),
                     'type'        => 'text',
-                    'description' => __( 'Starting Order Id must be unique in every single order. And increment after every order.', 'Ameria_Gateway' ),
+                    'description' => __( 'Starting Order Id must be unique in every single order. And increment after every order.', 'wc_gateway_ameria_gateway' ),
                     'default'     => '',
                     'desc_tip'    => true,
                 ),
               'client_id' => array(
-                  'title'       => __( 'Client ID', 'Ameria_Gateway' ),
+                  'title'       => __( 'Client ID', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'text',
-                  'description' => __( 'This is clinet ID setting for using Ameriabank vpos service.', 'Ameria_Gateway' ),
+                  'description' => __( 'This is clinet ID setting for using Ameriabank vpos service.', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               'username' => array(
-                  'title'       => __( 'Username', 'Ameria_Gateway' ),
+                  'title'       => __( 'Username', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'text',
-                  'description' => __( 'This is username setting for using Ameriabank vpos service.', 'Ameria_Gateway' ),
+                  'description' => __( 'This is username setting for using Ameriabank vpos service.', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               'password' => array(
-                  'title'       => __( 'Password', 'Ameria_Gateway' ),
+                  'title'       => __( 'Password', 'wc_gateway_ameria_gateway' ),
                   'type'        => 'password',
-                  'description' => __( 'This is password setting for using Ameriabank vpos service.', 'Ameria_Gateway' ),
+                  'description' => __( 'This is password setting for using Ameriabank vpos service.', 'wc_gateway_ameria_gateway' ),
                   'desc_tip'    => true,
                 ),
               )
@@ -289,12 +289,12 @@ function ameria_gateway_init() {
                 wc_add_notice( __('Error processing checkout. Please contact administrator.','payment'), 'error' );
               }
         }
-    } // end \Ameria_Gateway class
+    } // end \wc_gateway_ameria_gateway class
 }
 
-function Ameria_Gateway_add_to_gateways( $gateways ) {
-    $gateways[] = 'Ameria_Gateway';
+function wc_gateway_ameria_gateway_add_to_gateways( $gateways ) {
+    $gateways[] = 'wc_gateway_ameria_gateway';
     return $gateways;
 }
 
-add_filter( 'woocommerce_payment_gateways', 'Ameria_Gateway_add_to_gateways' );
+add_filter( 'woocommerce_payment_gateways', 'wc_gateway_ameria_gateway_add_to_gateways' );
